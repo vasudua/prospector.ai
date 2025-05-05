@@ -3,13 +3,15 @@ from bs4 import BeautifulSoup
 import asyncio
 import openai
 import os
-from typing import Dict, Optional, Tuple, List, Union
+from typing import Dict, Optional, Tuple, List, Union, Any
 import json
 import httpx
 import validators
 from playwright.async_api import async_playwright
 import re
 from app.utils.url_utils import UrlUtils
+from sqlalchemy import inspect
+from app.models.company import Company
 
 class AIService:
   """Service for AI-related operations."""
@@ -18,8 +20,8 @@ class AIService:
     """Initialize AI service with API key."""
     self.api_key = api_key or os.environ.get('OPENAI_API_KEY')
     # Create an explicit httpx client without proxies to avoid the error
-    http_client = httpx.Client()
-    self.client = openai.OpenAI(api_key=self.api_key, http_client=http_client)
+    http_client = httpx.AsyncClient()
+    self.client = openai.AsyncOpenAI(api_key=self.api_key, http_client=http_client)
     
   async def scrape_website(self, url: str) -> Tuple[str, Optional[str]]:
     """
@@ -141,8 +143,7 @@ class AIService:
     try:
       prompt = self._create_summary_prompt(company_data, website_content)
       
-      response = await asyncio.to_thread(
-        self.client.chat.completions.create,
+      response = await self.client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=150
@@ -216,8 +217,7 @@ class AIService:
     try:
       prompt = self._create_search_enhancement_prompt(search_query)
       
-      response = await asyncio.to_thread(
-        self.client.chat.completions.create,
+      response = await self.client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=150
@@ -252,70 +252,7 @@ class AIService:
       "size": "100+"
     }}
     """
-
-  async def generate_sql_query(self, search_text: str) -> Tuple[Optional[str], Optional[str]]:
-    """
-    Generate a SQL query from natural language search text using AI.
-    
-    Args:
-        search_text: Natural language search text
-        
-    Returns:
-        Tuple of (sql_query, error_message)
-    """
-    if not search_text:
-      return None, "Empty search query"
-      
-    try:
-      prompt = self._create_sql_generation_prompt(search_text)
-      
-      response = await asyncio.to_thread(
-        self.client.chat.completions.create,
-        model="gpt-3.5-turbo",
-        messages=[
-          {"role": "system", "content": "You are an expert SQL developer who helps convert natural language to SQL queries. Just give me the SQL query, nothing else."},
-          {"role": "user", "content": prompt}
-        ],
-        max_tokens=300
-      )
-      
-      sql_query = response.choices[0].message.content.strip()
-
-      # Remove ```sql and ``` if present
-      sql_query = sql_query.replace("```sql", "").replace("```", "")
-      
-      # Validate SQL query
-      is_valid, error = self._validate_sql_query(sql_query)
-      if not is_valid:
-        return None, error
-        
-      return sql_query, None
-    except Exception as e:
-      error_msg = f"Error generating SQL query: {str(e)}"
-      print(error_msg)
-      return None, error_msg
-      
-  def _create_sql_generation_prompt(self, search_text: str) -> str:
-    """Create prompt for SQL generation."""
-    return f"""
-    Convert the following natural language query into a SQL query to search a companies database.
-    
-    Database schema:
-    - companies (id, name, website, founded, size, locality, region, country, industry, linkedin_url, ai_summary)
-    
-    Natural language query: "{search_text}"
-    
-    Requirements:
-    1. Only generate a valid SQL query that can be executed directly
-    2. Return only the SQL query and nothing else
-    3. Use proper SQL syntax that works with PostgreSQL
-    4. For text searches, use ILIKE for case-insensitive matching
-    5. If the natural language is ambiguous or cannot be translated to SQL, respond with "INVALID_QUERY"
-    6. Use wildcards (%) appropriately for partial matching
-    7. Handle numeric comparisons properly (e.g., founded > 2010)
-    8. Always return all fields from the companies table
-    """
-    
+ 
   def _validate_sql_query(self, sql_query: str) -> Tuple[bool, Optional[str]]:
     """
     Validate the generated SQL query.
@@ -351,4 +288,87 @@ class AIService:
       if table not in allowed_tables:
         return False, f"Generated query references unauthorized table: {table}"
     
-    return True, None 
+    return True, None
+
+  async def generate_sql_from_text(self, text_query: str, where_conditions: Dict = None) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Generate SQL query from natural language text.
+    
+    Args:
+        text_query: Natural language query
+        where_conditions: Dictionary of WHERE conditions to include
+        
+    Returns:
+        Tuple of (sql_query, error_message)
+    """
+    # Get company fields for context
+    company_fields = self._get_company_fields()
+    
+    # Construct prompt for OpenAI
+    prompt = f"""
+    Convert the following natural language query into a SQL query to search a companies database.
+    
+    Database schema:
+    {', '.join(company_fields)}
+    
+    Natural language query: "{text_query}"
+    
+    Requirements:
+    1. Only generate a valid SQL query that can be executed directly
+    2. Return only the SQL query and nothing else
+    3. Use proper SQL syntax that works with PostgreSQL
+    4. For text searches, use ILIKE for case-insensitive matching
+    5. If the natural language is ambiguous or cannot be translated to SQL, respond with "INVALID_QUERY"
+    6. Use wildcards (%) appropriately for partial matching
+    7. Handle numeric comparisons properly (e.g., founded > 2010)
+    8. Always return all fields from the companies table
+    """
+    
+    # Add where conditions if provided
+    if where_conditions:
+      prompt += "\n\nAlso include these specific WHERE conditions in the query:"
+      for field, value in where_conditions.items():
+        if field == 'founded_from':
+          prompt += f"\n- founded >= {value}"
+        elif field == 'founded_to':
+          prompt += f"\n- founded <= {value}"
+        else:
+          prompt += f"\n- {field} ILIKE '{value}'"
+    
+    if not self.api_key:
+      raise ValueError("OpenAI API key not found in environment variables")
+    
+    # Call OpenAI API
+    response = await self.client.chat.completions.create(
+      model="gpt-4",
+      messages=[
+        {"role": "system", "content": "You are a SQL expert. Generate only the SQL query without explanations or markdown formatting."},
+        {"role": "user", "content": prompt}
+      ],
+      temperature=0.1,
+      max_tokens=500
+    )
+    
+    # Extract SQL from response
+    sql_query = response.choices[0].message.content.strip()
+
+    # Remove ```sql and ``` if present
+    sql_query = sql_query.replace("```sql", "").replace("```", "").strip(";")
+    
+    # Validate SQL query
+    is_valid, error = self._validate_sql_query(sql_query)
+    if not is_valid:
+      return None, error
+    
+    return sql_query, None
+  
+  @staticmethod
+  def _get_company_fields() -> List[str]:
+    """
+    Get all filterable fields from the Company model.
+    
+    Returns:
+        List of field names from the Company model
+    """
+    # Use SQLAlchemy's inspect to get model columns
+    return [column.name for column in inspect(Company).columns] 
