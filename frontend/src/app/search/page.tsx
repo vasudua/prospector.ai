@@ -1,9 +1,9 @@
 "use client"
 
-import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import SearchFilters from '@/components/search/SearchFilters'
+import { useSearchParams } from 'next/navigation'
 import CompanyResults from '@/components/search/CompanyResults'
+import SearchFilters from '@/components/search/SearchFilters'
 
 export default function SearchPage() {
   const searchParams = useSearchParams()

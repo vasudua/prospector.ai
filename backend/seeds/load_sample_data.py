@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import json
-from tqdm import tqdm
 import os
 import sys
 
 # Add parent directory to path to import app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tqdm import tqdm
 
 from app import create_app, db
 from app.models import Company

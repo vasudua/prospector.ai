@@ -1,17 +1,17 @@
-import aiohttp
-from bs4 import BeautifulSoup
-import asyncio
-import openai
-import os
-from typing import Dict, Optional, Tuple, List, Union, Any
 import json
-import httpx
-import validators
-from playwright.async_api import async_playwright
+import os
 import re
-from app.utils.url_utils import UrlUtils
+from typing import Dict, Optional, Tuple, List
+
+from bs4 import BeautifulSoup
+import httpx
+from playwright.async_api import async_playwright
 from sqlalchemy import inspect
+
 from app.models.company import Company
+from app.utils.url_utils import UrlUtils
+
+import openai
 
 class AIService:
   """Service for AI-related operations."""

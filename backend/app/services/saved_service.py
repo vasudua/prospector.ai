@@ -1,5 +1,6 @@
-from app.models.company import Company, SavedCompany
 from typing import Dict, List, Optional, Tuple
+
+from app.models.company import Company, SavedCompany
 
 class SavedCompanyService:
   """Service for saved company-related operations."""

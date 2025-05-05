@@ -1,9 +1,9 @@
-from sqlalchemy import and_, or_, text, inspect
-from app.models.company import Company
-from app.utils.url_utils import UrlUtils
 from typing import Dict, List, Optional, Tuple, Any
-from flask_sqlalchemy import SQLAlchemy
+
+from sqlalchemy import and_, or_, text, inspect
+
 from app import db
+from app.models.company import Company
 from app.services.ai_service import AIService
 
 class CompanyService:

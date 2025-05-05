@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+
 from app.services.enrichment_service import EnrichmentService
 from app.utils.helpers import create_response, error_response
 

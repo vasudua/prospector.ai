@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MagnifyingGlassIcon, ChevronRightIcon, FunnelIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 const industries = [

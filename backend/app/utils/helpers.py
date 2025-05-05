@@ -1,5 +1,6 @@
+from typing import Dict, List, Any, Tuple
+
 from flask import jsonify, Response
-from typing import Dict, List, Any, Union, Tuple
 
 def create_response(
   data: Any = None,

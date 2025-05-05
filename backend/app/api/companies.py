@@ -1,9 +1,9 @@
-from flask import Blueprint, request, jsonify
-from app.services.company_service import CompanyService
+from flask import Blueprint, request
+
 from app.services.ai_service import AIService
+from app.services.company_service import CompanyService
 from app.utils.helpers import create_response, error_response, parse_request_args, validate_pagination
-from app.utils.url_utils import UrlUtils
-import asyncio
+
 
 # Initialize blueprint
 blueprint = Blueprint('companies', __name__, url_prefix='/api/companies')

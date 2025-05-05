@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from 'react'
-import SearchFilters from '@/components/search/SearchFilters'
 import CompanyResults from '@/components/search/CompanyResults'
+import SearchFilters from '@/components/search/SearchFilters'
 
 export default function Home() {
   const [searchInitiated, setSearchInitiated] = useState(false)

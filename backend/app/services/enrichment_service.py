@@ -1,6 +1,7 @@
-from app.services.ai_service import AIService
-from app.models.company import Company
 from typing import Dict, Optional, Tuple, List
+
+from app.models.company import Company
+from app.services.ai_service import AIService
 
 class EnrichmentService:
   """Service for company enrichment operations."""

@@ -1,11 +1,9 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BookmarkIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { Company, PaginatedResponse, companiesApi, enrichmentApi, savedCompaniesApi } from '@/services/api'
-import { API_CONFIG } from '@/config';
+import { Company, companiesApi, enrichmentApi, savedCompaniesApi } from '@/services/api'
 import SearchFilters from './SearchFilters';
-import React from 'react';
 
 export default function CompanyResults({ searchParams = {} }: { searchParams?: Record<string, any> }) {
   const [companies, setCompanies] = useState<Company[]>([])
