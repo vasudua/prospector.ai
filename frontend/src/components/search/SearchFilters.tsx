@@ -48,7 +48,7 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
 
   const validateSearch = () => {
     // If all fields are empty, show error
-    if (!searchQuery && !selectedIndustry && !selectedSize && !selectedCountry) {
+    if (!searchQuery && (!showFilters || (!selectedIndustry && !selectedSize && !selectedCountry))) {
       setValidationError('Please enter a search query or select at least one filter')
       return false
     }
@@ -63,6 +63,10 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
     return true
   }
 
+  const isSearchEnabled = () => {
+    return searchQuery.trim() !== '' || (showFilters && (selectedIndustry || selectedSize || selectedCountry))
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -73,11 +77,15 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
     // Create new URLSearchParams object
     const params: Record<string, string> = {}
     
-    // Add non-empty parameters
+    // Add query parameter if not empty
     if (searchQuery) params.q = searchQuery
-    if (selectedIndustry) params.industry = selectedIndustry
-    if (selectedSize) params.size = selectedSize
-    if (selectedCountry) params.country = selectedCountry
+    
+    // Only include filter parameters if the filters panel is open
+    if (showFilters) {
+      if (selectedIndustry) params.industry = selectedIndustry
+      if (selectedSize) params.size = selectedSize
+      if (selectedCountry) params.country = selectedCountry
+    }
     
     if (onSearch) {
       // Use the callback for homepage search
@@ -89,6 +97,12 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
         urlParams.set(key, value)
       })
       router.push(`/search?${urlParams.toString()}`)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === 'Return') && isSearchEnabled()) {
+      handleSearch(e)
     }
   }
 
@@ -107,11 +121,17 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
             placeholder="Search for companies (e.g., 'tech companies in Europe')"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <button
             type="submit"
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+            className={`absolute inset-y-0 right-0 flex items-center px-3 ${
+              isSearchEnabled()
+                ? 'text-indigo-600 hover:text-indigo-800 cursor-pointer'
+                : 'text-gray-300 cursor-not-allowed'
+            } focus:outline-none`}
             aria-label="Search"
+            disabled={!isSearchEnabled()}
           >
             <ChevronRightIcon className="h-6 w-6" />
           </button>
