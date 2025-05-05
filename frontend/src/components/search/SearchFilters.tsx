@@ -25,9 +25,10 @@ const companySizes = [
 
 interface SearchFiltersProps {
   onSearch?: (params: Record<string, string>) => void;
+  isLoading?: boolean;
 }
 
-export default function SearchFilters({ onSearch }: SearchFiltersProps) {
+export default function SearchFilters({ onSearch, isLoading = false }: SearchFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -126,14 +127,20 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
           <button
             type="submit"
             className={`absolute inset-y-0 right-0 flex items-center px-3 ${
-              isSearchEnabled()
-                ? 'text-indigo-600 hover:text-indigo-800 cursor-pointer'
-                : 'text-gray-300 cursor-not-allowed'
+              isLoading 
+                ? 'text-indigo-600 cursor-not-allowed'
+                : isSearchEnabled()
+                  ? 'text-indigo-600 hover:text-indigo-800 cursor-pointer'
+                  : 'text-gray-300 cursor-not-allowed'
             } focus:outline-none`}
             aria-label="Search"
-            disabled={!isSearchEnabled()}
+            disabled={!isSearchEnabled() || isLoading}
           >
-            <ChevronRightIcon className="h-6 w-6" />
+            {isLoading ? (
+              <div className="h-5 w-5 border-2 border-indigo-600 rounded-full border-t-transparent animate-spin" />
+            ) : (
+              <ChevronRightIcon className="h-6 w-6" />
+            )}
           </button>
         </div>
       </form>

@@ -5,7 +5,15 @@ import { BookmarkIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outli
 import { Company, companiesApi, enrichmentApi, savedCompaniesApi } from '@/services/api'
 import SearchFilters from './SearchFilters';
 
-export default function CompanyResults({ searchParams = {} }: { searchParams?: Record<string, any> }) {
+interface CompanyResultsProps {
+  searchParams?: Record<string, any>;
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export default function CompanyResults({ 
+  searchParams = {},
+  onLoadingChange 
+}: CompanyResultsProps) {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +31,10 @@ export default function CompanyResults({ searchParams = {} }: { searchParams?: R
 
   const fetchCompanies = async (page = 1) => {
     setLoading(true)
+    if (onLoadingChange) onLoadingChange(true)
     setError(null)
+    // Clear previous results immediately
+    setCompanies([])
     
     try {
       const response = await companiesApi.searchCompanies({
@@ -45,10 +56,13 @@ export default function CompanyResults({ searchParams = {} }: { searchParams?: R
       console.error('Error fetching companies:', err)
     } finally {
       setLoading(false)
+      if (onLoadingChange) onLoadingChange(false)
     }
   }
 
   const handleSearch = (params: Record<string, string>) => {
+    // Clear previous results immediately
+    setCompanies([])
     // Update search params and fetch
     const newParams = {...searchParams, ...params, page: 1}
     // Need to update the searchParams reference to avoid rendering duplicate search bars
@@ -129,93 +143,99 @@ export default function CompanyResults({ searchParams = {} }: { searchParams?: R
         {/* Only render SearchFilters if there are no companies loaded and we're not loading */}
         {companies.length === 0 && !loading && (
           <div className="mb-6">
-            <SearchFilters onSearch={handleSearch} />
+            <SearchFilters onSearch={handleSearch} isLoading={loading} />
+          </div>
+        )}
+        
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6">
+            <p className="mt-2 text-red-600">{error}</p>
           </div>
         )}
         
         {/* Results Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {loading ? 'Loading...' : `${pagination.totalItems} Companies Found`}
-          </h2>
-          {error && (
-            <p className="mt-2 text-red-600">{error}</p>
-          )}
-        </div>
+        {!loading && companies.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {`${pagination.totalItems} Companies Found`}
+            </h2>
+          </div>
+        )}
         
         {/* Company List */}
-        {companies.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {companies.map(company => (
-              <div 
-                key={company.id} 
-                className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200"
-              >
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex justify-between">
-                    <h3 className="text-lg font-medium text-gray-900 truncate">{company.name}</h3>
-                    <div className="flex space-x-2">
+        {!loading ? (
+          companies.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {companies.map(company => (
+                <div 
+                  key={company.id} 
+                  className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200"
+                >
+                  <div className="px-4 py-5 sm:px-6">
+                    <div className="flex justify-between">
+                      <h3 className="text-lg font-medium text-gray-900 truncate">{company.name}</h3>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => saveCompany(company.id)}
+                          className={`${saving === company.id ? 'animate-pulse' : ''} inline-flex items-center p-1 border border-transparent rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none`}
+                        >
+                          <BookmarkIcon className="h-6 w-6" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500 truncate">
+                      {company.industry || 'Industry not specified'}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {[company.locality, company.region, company.country]
+                        .filter(Boolean)
+                        .join(', ') || 'Location not specified'}
+                    </p>
+                  </div>
+                  <div className="px-4 py-4 sm:px-6">
+                    <div className="text-sm">
+                      {company.ai_summary ? (
+                        <p className="text-gray-700">{company.ai_summary}</p>
+                      ) : (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 italic">No summary available</span>
+                          <button
+                            onClick={() => enrichCompany(company.id)}
+                            disabled={isEnriching && enrichingId === company.id}
+                            className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none ${isEnriching && enrichingId === company.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <SparklesIcon className={`-ml-1 mr-2 h-4 w-4 ${isEnriching && enrichingId === company.id ? 'animate-spin' : ''}`} />
+                            Enrich
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="text-xs text-gray-500">
+                        {company.founded ? `Founded: ${company.founded}` : ''}
+                        {company.size ? (company.founded ? ' · ' : '') + `Size: ${company.size}` : ''}
+                      </div>
                       <button
-                        onClick={() => saveCompany(company.id)}
-                        className={`${saving === company.id ? 'animate-pulse' : ''} inline-flex items-center p-1 border border-transparent rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none`}
+                        onClick={() => viewCompanyDetails(company)}
+                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
                       >
-                        <BookmarkIcon className="h-6 w-6" />
+                        Details
                       </button>
                     </div>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500 truncate">
-                    {company.industry || 'Industry not specified'}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {[company.locality, company.region, company.country]
-                      .filter(Boolean)
-                      .join(', ') || 'Location not specified'}
-                  </p>
                 </div>
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="text-sm">
-                    {company.ai_summary ? (
-                      <p className="text-gray-700">{company.ai_summary}</p>
-                    ) : (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500 italic">No summary available</span>
-                        <button
-                          onClick={() => enrichCompany(company.id)}
-                          disabled={isEnriching && enrichingId === company.id}
-                          className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none ${isEnriching && enrichingId === company.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <SparklesIcon className={`-ml-1 mr-2 h-4 w-4 ${isEnriching && enrichingId === company.id ? 'animate-spin' : ''}`} />
-                          Enrich
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-2 flex justify-between items-center">
-                    <div className="text-xs text-gray-500">
-                      {company.founded ? `Founded: ${company.founded}` : ''}
-                      {company.size ? (company.founded ? ' · ' : '') + `Size: ${company.size}` : ''}
-                    </div>
-                    <button
-                      onClick={() => viewCompanyDetails(company)}
-                      className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-                    >
-                      Details
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          !loading && (
+              ))}
+            </div>
+          ) : (
             <div className="text-center py-10">
               <p className="text-gray-500">No companies found. Try adjusting your search criteria.</p>
             </div>
           )
-        )}
+        ) : null}
         
         {/* Pagination */}
-        {pagination.totalPages > 1 && (
+        {pagination.totalPages > 1 && !loading && (
           <div className="mt-6 flex justify-center">
             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
               <button

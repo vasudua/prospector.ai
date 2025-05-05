@@ -9,6 +9,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams()
   const [normalizedParams, setNormalizedParams] = useState<Record<string, string>>({})
   const [searchInitiated, setSearchInitiated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   
   // Convert searchParams to a regular object on initial load
   useEffect(() => {
@@ -25,8 +26,10 @@ export default function SearchPage() {
   }, [searchParams])
 
   const handleSearch = (params: Record<string, string>) => {
+    setIsLoading(true)
     setNormalizedParams(params)
     setSearchInitiated(true)
+    // Loading state will be handled by CompanyResults
   }
 
   return (
@@ -36,13 +39,16 @@ export default function SearchPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-8">🚀 prospector.ai 🚀</h1>
         )}
         <div className="w-full max-w-2xl">
-          <SearchFilters onSearch={handleSearch} />
+          <SearchFilters onSearch={handleSearch} isLoading={isLoading} />
         </div>
       </div>
       
       {searchInitiated && (
         <div>
-          <CompanyResults searchParams={normalizedParams} />
+          <CompanyResults 
+            searchParams={normalizedParams} 
+            onLoadingChange={(loading) => setIsLoading(loading)}
+          />
         </div>
       )}
     </div>

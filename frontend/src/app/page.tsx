@@ -7,10 +7,13 @@ import SearchFilters from '@/components/search/SearchFilters'
 export default function Home() {
   const [searchInitiated, setSearchInitiated] = useState(false)
   const [searchParams, setSearchParams] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSearch = (params: Record<string, string>) => {
+    setIsLoading(true)
     setSearchParams(params)
     setSearchInitiated(true)
+    // The loading state will be handled by CompanyResults
   }
 
   return (
@@ -21,13 +24,16 @@ export default function Home() {
           Search for companies by name, industry, location, and more. Use the filters to narrow down your results.
         </p>
         <div className="w-full max-w-2xl">
-          <SearchFilters onSearch={handleSearch} />
+          <SearchFilters onSearch={handleSearch} isLoading={isLoading} />
         </div>
       </div>
       
       {searchInitiated && (
         <div>
-          <CompanyResults searchParams={searchParams} />
+          <CompanyResults 
+            searchParams={searchParams} 
+            onLoadingChange={(loading) => setIsLoading(loading)}
+          />
         </div>
       )}
     </div>
