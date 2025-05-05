@@ -1,56 +1,16 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import CompanyResults from '@/components/search/CompanyResults'
-import SearchFilters from '@/components/search/SearchFilters'
+import { Suspense } from 'react'
+import SearchPageContent from '@/components/search/SearchPageContent'
 
 export default function SearchPage() {
-  const searchParams = useSearchParams()
-  const [normalizedParams, setNormalizedParams] = useState<Record<string, string>>({})
-  const [searchInitiated, setSearchInitiated] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  
-  // Convert searchParams to a regular object on initial load
-  useEffect(() => {
-    const params: Record<string, string> = {}
-    searchParams.forEach((value, key) => {
-      params[key] = value
-    })
-    
-    const hasValidParams = Object.keys(params).length > 0 && 
-                            Object.values(params).some(value => value)
-    
-    setNormalizedParams(params)
-    setSearchInitiated(hasValidParams)
-  }, [searchParams])
-
-  const handleSearch = (params: Record<string, string>) => {
-    setIsLoading(true)
-    setNormalizedParams(params)
-    setSearchInitiated(true)
-    // Loading state will be handled by CompanyResults
-  }
-
   return (
     <div className="space-y-8">
-      <div className={`flex justify-center ${!searchInitiated ? 'min-h-[60vh] items-center flex-col' : ''}`}>
-        {!searchInitiated && (
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">🚀 prospector.ai 🚀</h1>
-        )}
-        <div className="w-full max-w-2xl">
-          <SearchFilters onSearch={handleSearch} isLoading={isLoading} />
-        </div>
-      </div>
-      
-      {searchInitiated && (
-        <div>
-          <CompanyResults 
-            searchParams={normalizedParams} 
-            onLoadingChange={(loading) => setIsLoading(loading)}
-          />
-        </div>
-      )}
+      <Suspense fallback={<div className="flex justify-center min-h-[60vh] items-center flex-col">
+        <div className="w-full max-w-2xl h-48 bg-gray-100 animate-pulse rounded-lg"></div>
+      </div>}>
+        <SearchPageContent />
+      </Suspense>
     </div>
   )
 } 

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { TrashIcon } from '@heroicons/react/24/outline'
-import { Company, SavedCompany, savedCompaniesApi } from '@/services/api'
+import { SavedCompany, savedCompaniesApi } from '@/services/api'
 
 export default function SavedCompanies() {
   const [savedCompanies, setSavedCompanies] = useState<SavedCompany[]>([])
@@ -16,7 +16,7 @@ export default function SavedCompanies() {
     perPage: 10
   })
 
-  const fetchSavedCompanies = async (page = 1) => {
+  const fetchSavedCompanies = useCallback(async (page = 1) => {
     setLoading(true)
     setError(null)
     
@@ -40,11 +40,11 @@ export default function SavedCompanies() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.perPage])
 
   useEffect(() => {
     fetchSavedCompanies()
-  }, [])
+  }, [fetchSavedCompanies])
 
   const handleRemove = async (savedId: string) => {
     setDeleting(savedId)
@@ -106,7 +106,7 @@ export default function SavedCompanies() {
   if (savedCompanies.length === 0) {
     return (
       <div className="bg-white shadow-sm rounded-lg p-8 text-center">
-        <p className="text-gray-600">You haven't saved any companies yet.</p>
+        <p className="text-gray-600">You haven&apos;t saved any companies yet.</p>
       </div>
     )
   }

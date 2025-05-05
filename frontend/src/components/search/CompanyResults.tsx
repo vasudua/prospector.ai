@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { BookmarkIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Company, companiesApi, enrichmentApi, savedCompaniesApi } from '@/services/api'
 import SearchFilters from './SearchFilters';
 
 interface CompanyResultsProps {
-  searchParams?: Record<string, any>;
+  searchParams?: Record<string, string | number>;
   onLoadingChange?: (loading: boolean) => void;
 }
 
@@ -29,7 +29,7 @@ export default function CompanyResults({
   const [saving, setSaving] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
 
-  const fetchCompanies = async (page = 1) => {
+  const fetchCompanies = useCallback(async (page = 1, customParams?: Record<string, string>) => {
     setLoading(true)
     if (onLoadingChange) onLoadingChange(true)
     setError(null)
@@ -37,9 +37,16 @@ export default function CompanyResults({
     setCompanies([])
     
     try {
+      // Use provided custom params or fall back to the component's searchParams
+      const baseParams = customParams || searchParams;
+      
+      // Create a stable copy of the search parameters
+      const stableParams = {...baseParams}
+      // Set page explicitly (overriding any existing page)
+      stableParams.page = page.toString()
+      
       const response = await companiesApi.searchCompanies({
-        ...searchParams,
-        page,
+        ...stableParams,
         per_page: pagination.perPage
       })
       
@@ -58,21 +65,26 @@ export default function CompanyResults({
       setLoading(false)
       if (onLoadingChange) onLoadingChange(false)
     }
-  }
+  // searchParams is intentionally omitted from deps to prevent infinite render loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.perPage, onLoadingChange])
 
   const handleSearch = (params: Record<string, string>) => {
-    // Clear previous results immediately
-    setCompanies([])
-    // Update search params and fetch
-    const newParams = {...searchParams, ...params, page: 1}
-    // Need to update the searchParams reference to avoid rendering duplicate search bars
-    Object.assign(searchParams, newParams)
-    fetchCompanies(1)
+    // Store the parameters for use in fetchCompanies
+    const searchParamsToUse = {...params};
+    
+    // Don't mutate the searchParams reference directly
+    // Instead, pass our parameters directly to fetchCompanies
+    fetchCompanies(1, searchParamsToUse);
   }
   
   useEffect(() => {
-    fetchCompanies(parseInt(searchParams.page as string) || 1)
-  }, [searchParams])
+    // Only run on initial mount or explicit searchParams changes from parent
+    const pageToFetch = parseInt(searchParams.page as string) || 1;
+    // Use the searchParams from props directly without passing a custom object
+    fetchCompanies(pageToFetch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(searchParams)]); // Use stringified version to stabilize the dependency
 
   const enrichCompany = async (companyId: string) => {
     if (isEnriching) return
@@ -124,6 +136,7 @@ export default function CompanyResults({
 
   const handlePageChange = (newPage: number) => {
     if (newPage === pagination.currentPage) return
+    // Use current searchParams when changing pages
     fetchCompanies(newPage)
   }
 

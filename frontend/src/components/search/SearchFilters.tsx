@@ -221,7 +221,7 @@ export default function SearchFilters({ onSearch, isLoading = false }: SearchFil
       
       <div className="w-full max-w-xl text-xs text-gray-500 flex flex-col">
         <p>
-          <span className="font-medium">Tip:</span> You can use natural language like "tech companies in Europe founded after 2010"
+          <span className="font-medium">Tip:</span> You can use natural language like &quot;tech companies in Europe founded after 2010&quot;
         </p>
       </div>
     </div>

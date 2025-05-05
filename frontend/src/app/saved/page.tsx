@@ -7,7 +7,7 @@ export default function SavedPage() {
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-semibold text-gray-900">Saved Prospects</h1>
           <p className="mt-2 text-sm text-gray-700">
-            View and manage your saved companies. These are the companies you've marked for follow-up.
+            View and manage your saved companies. These are the companies you&apos;ve marked for follow-up.
           </p>
         </div>
       </div>

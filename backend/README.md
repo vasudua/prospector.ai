@@ -1,69 +1,74 @@
-# Company Search Backend
+# Backend - Searcher
 
-A Flask-based backend service for company search, enrichment, and CRM functionality.
+The backend API server for Searcher built with Flask, SQLAlchemy, and PostgreSQL.
 
-## Features
+## Technology Stack
 
-- Company search with filtering and pagination
-- AI-powered company enrichment
-- Saved companies management
-- Async support for better performance
-
-## Setup
-
-1. Create a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Set up environment variables:
-Create a `.env` file in the backend directory with:
-```
-DATABASE_URL=postgresql://username:password@localhost:5432/company_db
-OPENAI_API_KEY=your_openai_api_key
-```
-
-4. Initialize the database:
-```bash
-flask db init
-flask db migrate
-flask db upgrade
-```
-
-## Running the Application
-
-1. Start the Flask development server:
-```bash
-flask run
-```
-
-The server will start at `http://localhost:5000`
-
-## API Endpoints
-
-### Company Search
-- `GET /api/companies/search` - Search companies with filters
-- `GET /api/companies/<id>` - Get company details
-
-### Company Enrichment
-- `POST /api/enrichment/company/<id>` - Generate AI summary for a company
-- `POST /api/enrichment/batch` - Generate AI summaries for multiple companies
-
-### Saved Companies
-- `GET /api/saved-companies` - Get saved companies
-- `POST /api/saved-companies` - Save a company
-- `DELETE /api/saved-companies/<id>` - Remove a saved company
-- `PATCH /api/saved-companies/<id>` - Update saved company notes
+- **Framework**: Flask 3.0 (Async)
+- **Database ORM**: SQLAlchemy with Flask-SQLAlchemy
+- **Database Migrations**: Flask-Migrate
+- **Database**: PostgreSQL
+- **API Integration**: OpenAI, Beautiful Soup
+- **Data Processing**: Pandas, NumPy
+- **Testing**: Pytest
 
 ## Development
 
-- The application uses Flask with SQLAlchemy for database operations
-- Async support is implemented using asyncio
-- AI services are powered by OpenAI's GPT-3.5
-- Database migrations are handled by Flask-Migrate
+### Prerequisites
+
+- Python 3.9+
+- PostgreSQL
+- Virtual environment (venv, conda, etc.)
+
+### Installation
+
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Initialize the database
+flask init-db
+
+# Start development server
+python run.py
+```
+
+## Folder Structure
+
+- `app/`: Main application package
+  - `__init__.py`: Application factory
+  - `models/`: Database models
+  - `routes/`: API routes and endpoints
+  - `services/`: Business logic and services
+  - `utils/`: Utility functions
+- `tests/`: Unit and integration tests
+- `seeds/`: Database seed data
+- `logs/`: Application logs
+- `manage.py`: Command-line management script
+- `run.py`: Development server script
+
+## Environment Variables
+
+Create a `.env` file in the root of the backend directory with the following variables:
+
+```
+FLASK_APP=run.py
+FLASK_ENV=development
+DATABASE_URL=postgresql://username:password@localhost:5432/searcher
+OPENAI_API_KEY=your_openai_api_key
+```
+
+## Testing
+
+```bash
+# Run tests
+pytest
+```
+
+## API Documentation
+
+[Add API documentation or Swagger UI link when implemented] 
