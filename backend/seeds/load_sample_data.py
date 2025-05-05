@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+import argparse
 import json
 import os
 import sys
@@ -67,6 +67,10 @@ def load_sample_companies(file_path, limit=1000000):
 
 if __name__ == '__main__':
   app = create_app()
+  parser = argparse.ArgumentParser(description='Load sample companies into the database.')
+  parser.add_argument('--file', type=str, default='/Users/vasudua/Downloads/free_company_dataset.jsonl.json', help='Path to the JSONL file containing company data.')
+  args = parser.parse_args()
+  
   with app.app_context():
     # Create tables if they don't exist
     db.create_all()
@@ -77,4 +81,4 @@ if __name__ == '__main__':
       sys.exit(0)
     
     # Load sample data
-    load_sample_companies('/Users/vasudua/Downloads/free_company_dataset.jsonl.json') 
+    load_sample_companies(args.file) 

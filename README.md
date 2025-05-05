@@ -25,3 +25,5 @@ A web application for advanced search capabilities with a modern tech stack.
 
 - Frontend development server: `cd frontend && npm run dev`
 - Backend development server: `cd backend && python run.py`
+- PostgreSQL: `cd postgresql && docker compose up -d`
+- To setup seed data: `cd backend/seeds && python load_sample_data --file "path_to_seed_file"`
