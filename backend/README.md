@@ -61,14 +61,3 @@ FLASK_ENV=development
 DATABASE_URL=postgresql://username:password@localhost:5432/searcher
 OPENAI_API_KEY=your_openai_api_key
 ```
-
-## Testing
-
-```bash
-# Run tests
-pytest
-```
-
-## API Documentation
-
-[Add API documentation or Swagger UI link when implemented] 

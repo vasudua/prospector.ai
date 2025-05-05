@@ -62,7 +62,3 @@ Create a `.env.local` file in the root of the frontend directory with the follow
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5001
 ```
-
-## Testing
-
-[Add testing instructions when implemented] 
