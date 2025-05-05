@@ -1,6 +1,6 @@
 from app.services.ai_service import AIService
 from app.models.company import Company
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 
 class EnrichmentService:
   """Service for company enrichment operations."""
@@ -27,21 +27,36 @@ class EnrichmentService:
     try:
       # Scrape website if available
       website_content = ""
+      scrape_error = None
+      
       if company.website:
-        website_content = await self.ai_service.scrape_website(company.website)
+        website_content, scrape_error = await self.ai_service.scrape_website(company.website)
       
-      # Generate AI summary
-      company_data = company.to_dict()
-      ai_summary = await self.ai_service.generate_company_summary(company_data, website_content)
+      # Handle scraping errors
+      if scrape_error:
+        # Save error in AI summary
+        company.update(ai_summary=f"Company information unavailable, might not be active.")
+        return True, company.to_dict(), ""
       
-      # Update company with AI summary
-      company.update(ai_summary=ai_summary)
+      # Generate AI summary if content was successfully scraped
+      if website_content:
+        company_data = company.to_dict()
+        ai_summary = await self.ai_service.generate_company_summary(company_data, website_content)
+        
+        # Update company with AI summary
+        company.update(ai_summary=ai_summary)
+      else:
+        # Save generic error if no content
+        company.update(ai_summary="Company information unavailable, might not be active")
       
       return True, company.to_dict(), ""
     except Exception as e:
-      return False, None, str(e)
+      # Log error and update company with error message
+      error_msg = str(e)
+      company.update(ai_summary=f"Company information unavailable, might not be active.")
+      return False, company.to_dict(), error_msg
       
-  async def batch_enrich_companies(self, company_ids: list) -> Tuple[bool, list, str]:
+  async def batch_enrich_companies(self, company_ids: List[int]) -> Tuple[bool, List[Dict], str]:
     """
     Enrich multiple companies with AI-generated summaries.
     

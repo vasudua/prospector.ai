@@ -1,8 +1,7 @@
 import Link from 'next/link'
-import { BuildingOfficeIcon, MagnifyingGlassIcon, BookmarkIcon } from '@heroicons/react/24/outline'
+import { BookmarkIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
-  { name: 'Search', href: '/', icon: MagnifyingGlassIcon },
   { name: 'Saved Prospects', href: '/saved', icon: BookmarkIcon },
 ]
 
@@ -12,10 +11,12 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">
-            <div className="flex flex-shrink-0 items-center">
-              <BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />
-              <span className="ml-2 text-xl font-semibold text-gray-900">SalesIntel</span>
-            </div>
+            <Link 
+              href="/"
+              className="flex flex-shrink-0 items-center"
+            >
+              <span className="text-2xl" aria-label="Rocket">🚀</span>
+            </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navigation.map((item) => (
                 <Link

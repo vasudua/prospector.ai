@@ -1,4 +1,4 @@
-flask==3.0.2
+Flask[async]==3.0.2
 flask-cors==4.0.0
 flask-sqlalchemy==3.1.1
 flask-migrate==4.0.5
@@ -11,4 +11,6 @@ pandas==2.2.1
 numpy==1.26.4
 python-jose==3.3.0
 pytest==8.0.2
-pytest-asyncio==0.23.5 
+pytest-asyncio==0.23.5
+playwright==1.41.0
+validators==0.22.0 

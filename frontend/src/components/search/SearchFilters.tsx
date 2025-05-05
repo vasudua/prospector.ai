@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from 'react'
-import { MagnifyingGlassIcon, ChevronRightIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { MagnifyingGlassIcon, ChevronRightIcon, FunnelIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 const industries = [
   'Technology',
@@ -22,16 +23,73 @@ const companySizes = [
   '1000+',
 ]
 
-export default function SearchFilters() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedIndustry, setSelectedIndustry] = useState('')
-  const [selectedSize, setSelectedSize] = useState('')
-  const [selectedCountry, setSelectedCountry] = useState('')
+interface SearchFiltersProps {
+  onSearch?: (params: Record<string, string>) => void;
+}
+
+export default function SearchFilters({ onSearch }: SearchFiltersProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const [selectedIndustry, setSelectedIndustry] = useState(searchParams.get('industry') || '')
+  const [selectedSize, setSelectedSize] = useState(searchParams.get('size') || '')
+  const [selectedCountry, setSelectedCountry] = useState(searchParams.get('country') || '')
   const [showFilters, setShowFilters] = useState(false)
+  const [validationError, setValidationError] = useState('')
+
+  // Sync state with URL params if they change externally
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '')
+    setSelectedIndustry(searchParams.get('industry') || '')
+    setSelectedSize(searchParams.get('size') || '')
+    setSelectedCountry(searchParams.get('country') || '')
+  }, [searchParams])
+
+  const validateSearch = () => {
+    // If all fields are empty, show error
+    if (!searchQuery && !selectedIndustry && !selectedSize && !selectedCountry) {
+      setValidationError('Please enter a search query or select at least one filter')
+      return false
+    }
+
+    // If filter panel is open but no filters selected, show error
+    if (showFilters && !selectedIndustry && !selectedSize && !selectedCountry) {
+      setValidationError('Please select at least one filter when filter panel is open')
+      return false
+    }
+
+    setValidationError('')
+    return true
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Trigger search logic
+    
+    if (!validateSearch()) {
+      return
+    }
+    
+    // Create new URLSearchParams object
+    const params: Record<string, string> = {}
+    
+    // Add non-empty parameters
+    if (searchQuery) params.q = searchQuery
+    if (selectedIndustry) params.industry = selectedIndustry
+    if (selectedSize) params.size = selectedSize
+    if (selectedCountry) params.country = selectedCountry
+    
+    if (onSearch) {
+      // Use the callback for homepage search
+      onSearch(params)
+    } else {
+      // Navigate to the search page with the parameters (for other pages)
+      const urlParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        urlParams.set(key, value)
+      })
+      router.push(`/search?${urlParams.toString()}`)
+    }
   }
 
   return (
@@ -45,8 +103,8 @@ export default function SearchFilters() {
             type="text"
             name="search"
             id="search"
-            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 py-3 sm:text-base border border-gray-300 rounded-lg shadow-sm bg-white placeholder-gray-300 text-black"
-            placeholder="What can I help you with?"
+            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 py-3 sm:text-base border border-gray-300 bg-white rounded-lg shadow-sm placeholder-gray-300 text-black"
+            placeholder="Search for companies (e.g., 'tech companies in Europe')"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -59,6 +117,13 @@ export default function SearchFilters() {
           </button>
         </div>
       </form>
+
+      {validationError && (
+        <div className="w-full max-w-xl px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-md flex items-center">
+          <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0 mr-2" />
+          <span>{validationError}</span>
+        </div>
+      )}
 
       <button
         type="button"
@@ -83,7 +148,7 @@ export default function SearchFilters() {
               value={selectedIndustry}
               onChange={(e) => setSelectedIndustry(e.target.value)}
             >
-              <option value="" className="text-gray-300">All Industries</option>
+              <option value="" className="text-gray-300">Select Industry</option>
               {industries.map((industry) => (
                 <option key={industry} value={industry}>
                   {industry}
@@ -102,7 +167,7 @@ export default function SearchFilters() {
               value={selectedSize}
               onChange={(e) => setSelectedSize(e.target.value)}
             >
-              <option value="" className="text-gray-300">Any Size</option>
+              <option value="" className="text-gray-300">Select Size</option>
               {companySizes.map((size) => (
                 <option key={size} value={size}>
                   {size} employees
@@ -119,13 +184,19 @@ export default function SearchFilters() {
               name="country"
               id="country"
               className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm placeholder-gray-300 text-black"
-              placeholder="All Countries"
+              placeholder="Enter country"
               value={selectedCountry}
               onChange={(e) => setSelectedCountry(e.target.value)}
             />
           </div>
         </div>
       )}
+      
+      <div className="w-full max-w-xl text-xs text-gray-500 flex flex-col">
+        <p>
+          <span className="font-medium">Tip:</span> You can use natural language like "tech companies in Europe founded after 2010"
+        </p>
+      </div>
     </div>
   )
 } 

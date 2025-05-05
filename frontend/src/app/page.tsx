@@ -1,17 +1,36 @@
+"use client"
+
+import { useState } from 'react'
 import SearchFilters from '@/components/search/SearchFilters'
 import CompanyResults from '@/components/search/CompanyResults'
 
 export default function Home() {
+  const [searchInitiated, setSearchInitiated] = useState(false)
+  const [searchParams, setSearchParams] = useState<Record<string, string>>({})
+
+  const handleSearch = (params: Record<string, string>) => {
+    setSearchParams(params)
+    setSearchInitiated(true)
+  }
+
   return (
     <div className="space-y-8">
-      <div className="flex justify-center">
+      <div className={`flex flex-col items-center justify-center ${!searchInitiated ? 'min-h-[60vh]' : ''} text-center`}>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">🚀 prospector.ai 🚀</h1>
+        <p className="text-gray-600 mb-8 max-w-lg">
+          Search for companies by name, industry, location, and more. Use the filters to narrow down your results.
+        </p>
         <div className="w-full max-w-2xl">
-          <SearchFilters />
+          <SearchFilters onSearch={handleSearch} />
         </div>
       </div>
-      <div>
-        <CompanyResults />
-      </div>
+      
+      {searchInitiated && (
+        <div>
+          <CompanyResults searchParams={searchParams} />
+        </div>
+      )}
     </div>
   )
 }
+

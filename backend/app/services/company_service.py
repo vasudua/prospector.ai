@@ -1,6 +1,9 @@
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, text
 from app.models.company import Company
+from app.utils.url_utils import UrlUtils
 from typing import Dict, List, Optional, Tuple
+from flask_sqlalchemy import SQLAlchemy
+from app import db
 
 class CompanyService:
   """Service for company-related operations."""
@@ -65,9 +68,9 @@ class CompanyService:
       paginated_companies.pages,
       page
     )
-  
+    
   @staticmethod
-  def get_company(company_id: int) -> Optional[Dict]:
+  def get_company(company_id: int) -> Optional[Company]:
     """
     Get company by ID.
     
@@ -75,7 +78,72 @@ class CompanyService:
         company_id: Company ID
         
     Returns:
-        Company dict or None if not found
+        Company object or None if not found
     """
-    company = Company.query.get(company_id)
-    return company.to_dict() if company else None 
+    return Company.query.get(company_id)
+    
+  @staticmethod
+  def execute_sql_query(
+    sql_query: str,
+    page: int = 1,
+    per_page: int = 10
+  ) -> Tuple[List[Dict], int, int, int]:
+    """
+    Execute SQL query and return paginated results.
+    
+    Args:
+        sql_query: SQL query string
+        page: Page number
+        per_page: Items per page
+        
+    Returns:
+        Tuple of (companies list, total count, total pages, current page)
+    """
+    try:
+      # Create a text SQL query
+      query = text(sql_query)
+      
+      # Execute query to get all results
+      result = db.session.execute(query)
+      
+      # Convert to list of dicts
+      all_items = []
+      for row in result:
+        # Check if row is a SQLAlchemy Company object
+        if isinstance(row, Company):
+          all_items.append(row.to_dict())
+        # Check if row is a tuple with a single Company element
+        elif isinstance(row, tuple) and len(row) == 1 and isinstance(row[0], Company):
+          all_items.append(row[0].to_dict())
+        # Otherwise, check if row has a _mapping attribute (new SQLAlchemy style)
+        elif hasattr(row, '_mapping'):
+          all_items.append(dict(row._mapping))
+        # Fallback for older SQLAlchemy versions
+        else:
+          try:
+            # Try to convert row to dict
+            all_items.append(dict(row))
+          except Exception:
+            # If that fails, process individual fields
+            item = {}
+            for idx, column in enumerate(result.keys()):
+              item[column] = row[idx]
+            all_items.append(item)
+      
+      # Calculate pagination
+      total_items = len(all_items)
+      total_pages = (total_items + per_page - 1) // per_page
+      
+      # Adjust page number if out of range
+      if page > total_pages and total_pages > 0:
+        page = total_pages
+      
+      # Get paginated items
+      start_idx = (page - 1) * per_page
+      end_idx = start_idx + per_page
+      paginated_items = all_items[start_idx:end_idx]
+      
+      return paginated_items, total_items, total_pages, page
+    except Exception as e:
+      # Re-raise the exception with more context
+      raise ValueError(f"Error executing SQL query: {str(e)}") 
