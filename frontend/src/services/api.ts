@@ -190,13 +190,27 @@ export const savedCompaniesApi = {
    * Save a company
    */
   async saveCompany(params: { company_id: string, user_id?: string, notes?: string }): Promise<SavedCompany> {
+    const requestBody = {
+      ...params,
+      company_id: parseInt(params.company_id, 10),
+      user_id: params.user_id ? parseInt(params.user_id, 10) : undefined
+    };
+    
+    console.log('Saving company with request body:', requestBody);
+    
     const response = await safeFetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVED_COMPANIES}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(requestBody)
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error response from server:', errorData);
+      throw new ApiError(errorData.error || `Failed to save company: ${response.status}`, response.status);
+    }
     
     const data = await handleResponse<{ success: boolean, saved_company: SavedCompany }>(response);
     return data.saved_company;

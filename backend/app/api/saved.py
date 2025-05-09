@@ -39,14 +39,21 @@ def save_company():
   """Save a company for a user."""
   try:
     data = request.get_json()
+    if not data:
+      return error_response("No data provided", 400)
     
-    # Extract data from request
-    company_id = data.get('company_id')
-    user_id = data.get('user_id', 1)  # Default for demo
-    notes = data.get('notes', '')
-    
-    if not company_id:
-      return error_response("Company ID is required", 400)
+    # Extract and validate data from request
+    try:
+      company_id = int(data.get('company_id'))
+    except (TypeError, ValueError):
+      return error_response("Invalid company_id: must be a number", 400)
+      
+    try:
+      user_id = int(data.get('user_id', 1))  # Default for demo
+    except (TypeError, ValueError):
+      return error_response("Invalid user_id: must be a number", 400)
+      
+    notes = str(data.get('notes', ''))
     
     # Save company
     success, saved_company, error = SavedCompanyService.save_company(
