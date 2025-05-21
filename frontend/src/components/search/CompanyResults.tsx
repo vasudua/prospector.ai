@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { BookmarkIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Company, companiesApi, enrichmentApi, savedCompaniesApi } from '@/services/api'
-import SearchFilters from './SearchFilters';
 
 interface CompanyResultsProps {
   searchParams?: Record<string, string | number>;
@@ -68,23 +67,14 @@ export default function CompanyResults({
   // searchParams is intentionally omitted from deps to prevent infinite render loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.perPage, onLoadingChange])
-
-  const handleSearch = (params: Record<string, string>) => {
-    // Store the parameters for use in fetchCompanies
-    const searchParamsToUse = {...params};
-    
-    // Don't mutate the searchParams reference directly
-    // Instead, pass our parameters directly to fetchCompanies
-    fetchCompanies(1, searchParamsToUse);
-  }
   
   useEffect(() => {
     // Only run on initial mount or explicit searchParams changes from parent
     const pageToFetch = parseInt(searchParams.page as string) || 1;
-    // Use the searchParams from props directly without passing a custom object
-    fetchCompanies(pageToFetch);
+    // Use the searchParams from props directly
+    fetchCompanies(pageToFetch, searchParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(searchParams)]); // Use stringified version to stabilize the dependency
+  }, [fetchCompanies, searchParams]); // Use stringified version to stabilize the dependency
 
   const enrichCompany = async (companyId: string) => {
     if (isEnriching) return
@@ -153,13 +143,6 @@ export default function CompanyResults({
   return (
     <div className="py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Only render SearchFilters if there are no companies loaded and we're not loading */}
-        {companies.length === 0 && !loading && (
-          <div className="mb-6">
-            <SearchFilters onSearch={handleSearch} isLoading={loading} />
-          </div>
-        )}
-        
         {/* Error Display */}
         {error && (
           <div className="mb-6">

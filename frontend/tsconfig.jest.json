@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx", // Needed for React 17+ new JSX transform
+    "esModuleInterop": true,
+    "module": "ESNext", // Or "CommonJS" if you prefer, but ESNext is good for modern Jest with ESM support
+    "types": ["jest", "@testing-library/jest-dom"] // Include Jest and jest-dom types
+  },
+  "include": [
+    "**/*.test.ts", // Include all .test.ts files
+    "**/*.test.tsx", // Include all .test.tsx files
+    "jest.setup.ts" // Include setup file
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}
